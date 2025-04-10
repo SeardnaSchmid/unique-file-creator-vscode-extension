@@ -16,6 +16,10 @@
       {
         "command": "unique-file-creator-vscode-extension.createFile",
         "title": "Unique File Creator: Create new file"
+      },
+      {
+        "command": "unique-file-creator-vscode-extension.createFileNoInput",
+        "title": "Unique File Creator: Create new file without title input prompt"
       }
     ],
     "configuration": {
@@ -24,7 +28,7 @@
       "properties": {
         "uniqueFileCreator.timestampPrefix": {
           "type": "string",
-          "default": "YYYY-MM-DD-HH-mm-ss",
+          "default": "YYYY-MM-DD-HH-mm-ss ",
           "description": "The format of the timestamp prefix for new files. See moment.js documentation for format options."
         },
         "uniqueFileCreator.postfix": {
