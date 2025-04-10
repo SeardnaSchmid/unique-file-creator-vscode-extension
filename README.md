@@ -40,4 +40,4 @@ Contributions are welcome! To contribute:
 This extension is licensed under the [MIT License](LICENSE).
 
 ## Support
-If you encounter any issues or have feature requests, please open an issue on the [GitHub repository](https://github.com/schmida/unique-file-creator-vscode-extension).
+If you encounter any issues or have feature requests, please open an issue on the [GitHub repository](https://github.com/SeardnaSchmid/unique-file-creator-vscode-extension).
