@@ -24,7 +24,8 @@ Alternatively, you can install it from the [Visual Studio Code Marketplace](http
 ### Example
 If you enter `my-new-file` as the title and the timestamp format is `YYYY-MM-DD-hh-mm-ss`, the file will be created as:
 ```
-2025-04-10-12-30-45-my-new-file.txt
+2025-04-10-12-30-45 - my-new-file.txt
+<timestamp> - <filename><extension>
 ```
 
 ## Configuration

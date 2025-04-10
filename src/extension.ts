@@ -1,66 +1,121 @@
-// The module 'vscode' contains the VS Code extensibility API
-// Import the module and reference it with the alias vscode in your code below
-import * as vscode from 'vscode';
-import * as fs from 'fs';
-import * as path from 'path';
+import vscode from 'vscode';
+import fs from 'fs';
+import path from 'path';
+import moment from 'moment';
 
-// This method is called when your extension is activated
-// Your extension is activated the very first time the command is executed
+// Constants for default configuration values
+const DEFAULT_TIMESTAMP_FORMAT = 'YYYY-MM-DD-HH-mm-ss ';
+const DEFAULT_POSTFIX = '';
+const DEFAULT_EXTENSION = '.md';
+
+/**
+ * Generates a unique file name based on the provided parameters.
+ * @param timestampFormat Format for the timestamp.
+ * @param userInputTitle Title provided by the user.
+ * @param postFix Postfix to append to the file name.
+ * @param fileExtension File extension.
+ * @param counter Optional counter for duplicate file names.
+ * @returns Generated file name.
+ */
+function generateFileName(
+    timestampFormat: string,
+    userInputTitle: string | null,
+    postFix: string,
+    fileExtension: string,
+    counter: number | null = null
+): string {
+    const timestamp = moment().format(timestampFormat);
+    return `${timestamp}${userInputTitle ? userInputTitle : ""}${postFix}${counter ? counter : ''}${fileExtension}`;
+}
+
+/**
+ * Retrieves configuration values for the extension.
+ * @returns Object containing configuration values.
+ */
+function getConfiguration() {
+    const config = vscode.workspace.getConfiguration('uniqueFileCreator');
+    return {
+        timestampFormat: config.get<string>('defaults.timestampPrefix', DEFAULT_TIMESTAMP_FORMAT),
+        postFix: config.get<string>('defaults.postFix', DEFAULT_POSTFIX),
+        fileExtension: config.get<string>('defaults.extension', DEFAULT_EXTENSION),
+    };
+}
+
+/**
+ * Creates a new file in the workspace folder.
+ * @param workspacePath Path to the workspace folder.
+ * @param fileName Initial file name.
+ * @returns Path to the created file.
+ */
+function createUniqueFile(workspacePath: string, fileName: string): string {
+    let filePath = path.join(workspacePath, fileName);
+    let counter = 1;
+
+    // Ensure the file name is unique
+    while (fs.existsSync(filePath)) {
+        fileName = generateFileName(
+            DEFAULT_TIMESTAMP_FORMAT,
+            fileName,
+            DEFAULT_POSTFIX,
+            DEFAULT_EXTENSION,
+            counter
+        );
+        filePath = path.join(workspacePath, fileName);
+        counter++;
+    }
+
+    // Create the file
+    fs.writeFileSync(filePath, '');
+    return filePath;
+}
+
 export function activate(context: vscode.ExtensionContext) {
+    console.log('Congratulations, your extension "unique-file-creator-vscode-extension" is now active!');
 
-	// Use the console to output diagnostic information (console.log) and errors (console.error)
-	// This line of code will only be executed once when your extension is activated
-	console.log('Congratulations, your extension "unique-file-creator-vscode-extension" is now active!');
+    const createFileCommand = vscode.commands.registerCommand(
+        'unique-file-creator-vscode-extension.createFile',
+        async () => {
+            try {
+                // Get configuration values
+                const { timestampFormat, postFix, fileExtension } = getConfiguration();
 
-	// The command has been defined in the package.json file
-	// Now provide the implementation of the command with registerCommand
-	// The commandId parameter must match the command field in package.json
-	const disposable = vscode.commands.registerCommand('unique-file-creator-vscode-extension.helloWorld', () => {
-		// The code you place here will be executed every time your command is executed
-		// Display a message box to the user
-		vscode.window.showInformationMessage('Hello World from unique-file-creator-vscode-extension!');
-	});
+                // Prompt the user for a file title
+                const userInputTitle = (await vscode.window.showInputBox({
+                    prompt: 'Enter the title for the new file',
+                    placeHolder: 'e.g., my-new-file',
+                })) || null;
 
-	context.subscriptions.push(disposable);
+                const initialFileName = generateFileName(
+                    timestampFormat,
+                    userInputTitle,
+                    postFix,
+                    fileExtension
+                );
 
-	const createFileCommand = vscode.commands.registerCommand('unique-file-creator-vscode-extension.createFile', async () => {
-        // Prompt the user for a file title
-        const title = await vscode.window.showInputBox({
-            prompt: 'Enter the title for the new file',
-            placeHolder: 'e.g., my-new-file'
-        });
+                // Get the workspace folder
+                const workspaceFolders = vscode.workspace.workspaceFolders;
+                if (!workspaceFolders || workspaceFolders.length === 0) {
+                    vscode.window.showErrorMessage('No workspace folder is open.');
+                    return;
+                }
 
-        if (!title) {
-            vscode.window.showErrorMessage('File creation cancelled. No title provided.');
-            return;
+                const workspacePath = workspaceFolders[0].uri.fsPath;
+
+                // Create the file
+                const filePath = createUniqueFile(workspacePath, initialFileName);
+
+                // Open the file in the editor
+                const document = await vscode.workspace.openTextDocument(filePath);
+                await vscode.window.showTextDocument(document);
+
+                vscode.window.showInformationMessage(`File created: ${filePath}`);
+            } catch (error) {
+                vscode.window.showErrorMessage(`Error creating file: ${error}`);
+            }
         }
-
-        // Generate a timestamp
-        const timestamp = new Date().toISOString().replace(/[:.]/g, '-');
-        const fileName = `${timestamp}-${title}.txt`;
-
-        // Get the workspace folder
-        const workspaceFolders = vscode.workspace.workspaceFolders;
-        if (!workspaceFolders || workspaceFolders.length === 0) {
-            vscode.window.showErrorMessage('No workspace folder is open.');
-            return;
-        }
-
-        const workspacePath = workspaceFolders[0].uri.fsPath;
-        const filePath = path.join(workspacePath, fileName);
-
-        // Create the file
-        fs.writeFileSync(filePath, '');
-
-        // Open the file in the editor
-        const document = await vscode.workspace.openTextDocument(filePath);
-        await vscode.window.showTextDocument(document);
-
-        vscode.window.showInformationMessage(`File created: ${fileName}`);
-    });
+    );
 
     context.subscriptions.push(createFileCommand);
 }
 
-// This method is called when your extension is deactivated
-export function deactivate() {}
+export function deactivate() { }
