@@ -3,7 +3,7 @@
   "publisher": "CodeSmith",
   "displayName": "Unique File Creator",
   "description": "Create a new file with a unique name (timestamp) in the current workspace.",
-  "version": "0.0.1",
+  "version": "0.0.2",
   "engines": {
     "vscode": "^1.99.0"
   },
